@@ -5,22 +5,23 @@ const tabBar = document.getElementById('tab-bar');
 const contentArea = document.getElementById('content-area');
 const urlBar = document.getElementById('url-bar');
 const newTabBtn = document.getElementById('new-tab-btn');
+const bookmarksBar = document.getElementById('bookmarks-bar');
 
-function createTab(initialUrl = 'https://example.com') {
+const HOME_URL = 'https://html.duckduckgo.com/html/';
+
+function createTab(initialUrl = HOME_URL) {
   const tabId = 'tab-' + Date.now();
   
-  // Luodaan välilehtinappi
   const tabElement = document.createElement('div');
-  tabElement.className = 'tab active';
+  tabElement.className = 'tab';
   tabElement.dataset.id = tabId;
   tabElement.innerHTML = `
-    <span class="tab-title">Sivu</span>
-    <span class="close-tab">&times;</span>
+    <span class="tab-title">Ladataan...</span>
+    <span class="close-tab" title="Sulje">&times;</span>
   `;
 
-  // Luodaan iframe-näkymä
   const iframe = document.createElement('iframe');
-  iframe.className = 'view-pane active';
+  iframe.className = 'view-pane';
   iframe.dataset.id = tabId;
   iframe.src = initialUrl;
 
@@ -32,7 +33,6 @@ function createTab(initialUrl = 'https://example.com') {
 
   switchTab(tabId);
 
-  // Tapahtumat
   tabElement.addEventListener('click', (e) => {
     if (e.target.classList.contains('close-tab')) {
       e.stopPropagation();
@@ -41,6 +41,8 @@ function createTab(initialUrl = 'https://example.com') {
       switchTab(tabId);
     }
   });
+
+  updateTabTitle(tabData, initialUrl);
 }
 
 function switchTab(tabId) {
@@ -73,17 +75,34 @@ function closeTab(tabId) {
   }
 }
 
+function updateTabTitle(tabData, url) {
+  let title = 'Uusi välilehti';
+  if (url.includes('duckduckgo.com')) {
+    title = 'Haku';
+  } else if (url.includes('wikipedia.org')) {
+    title = 'Wikipedia';
+  } else {
+    try {
+      const parsed = new URL(url);
+      title = parsed.hostname.replace('www.', '');
+    } catch (e) {
+      title = url.substring(0, 15);
+    }
+  }
+  tabData.tabElement.querySelector('.tab-title').textContent = title;
+}
+
 function navigate() {
   if (!activeTabId) return;
   let input = urlBar.value.trim();
+  if (!input) return;
+
   let finalUrl = input;
 
-  // Lista sivustoista, jotka estävät iframe-upotuksen
   const blockedSites = ['youtube.com', 'google.com', 'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com'];
   const isBlocked = blockedSites.some(site => input.toLowerCase().includes(site));
 
   if (isBlocked || (!input.startsWith('http://') && !input.startsWith('https://') && (!input.includes('.') || input.includes(' ')))) {
-    // Ohjataan hakuun DuckDuckGon kautta, jos sivusto on estetty tai kyseessä on hakusana
     finalUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
   } else if (!input.startsWith('http://') && !input.startsWith('https://')) {
     finalUrl = 'https://' + input;
@@ -93,18 +112,49 @@ function navigate() {
   if (currentTab) {
     currentTab.url = finalUrl;
     currentTab.iframe.src = finalUrl;
-    currentTab.tabElement.querySelector('.tab-title').textContent = input.substring(0, 12);
+    updateTabTitle(currentTab, finalUrl);
   }
 }
 
-// Napit ja kuuntelijat
+// Tapahtumakuuntelijat
 document.getElementById('go-btn').addEventListener('click', navigate);
 urlBar.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate(); });
-newTabBtn.addEventListener('click', () => createTab('https://example.com'));
+newTabBtn.addEventListener('click', () => createTab(HOME_URL));
+
 document.getElementById('home-btn').addEventListener('click', () => {
-  urlBar.value = 'https://example.com';
+  urlBar.value = HOME_URL;
   navigate();
 });
 
+document.getElementById('reload-btn').addEventListener('click', () => {
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab) currentTab.iframe.src = currentTab.iframe.src;
+});
+
+document.getElementById('back-btn').addEventListener('click', () => {
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab && currentTab.iframe.contentWindow) {
+    try { currentTab.iframe.contentWindow.history.back(); } catch (e) {}
+  }
+});
+
+document.getElementById('forward-btn').addEventListener('click', () => {
+  const currentTab = tabs.find(t => t.id === activeTabId);
+  if (currentTab && currentTab.iframe.contentWindow) {
+    try { currentTab.iframe.contentWindow.history.forward(); } catch (e) {}
+  }
+});
+
+// Kirjanmerkkien klikkaus
+bookmarksBar.addEventListener('click', (e) => {
+  if (e.target.classList.contains('bookmark-item')) {
+    const targetUrl = e.target.dataset.url;
+    if (targetUrl) {
+      urlBar.value = targetUrl;
+      navigate();
+    }
+  }
+});
+
 // Käynnistetään ensimmäinen välilehti
-createTab('https://example.com');
+createTab(HOME_URL);

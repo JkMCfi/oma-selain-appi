@@ -1,8 +1,7 @@
-// --- SELAINSOVELLUKSEN PÄÄLOGIIKKA ---
+// --- CATBROWSER ENGINE ---
 
 let tabs = [];
 let activeTabId = null;
-let historyLog = [];
 
 const tabBar = document.getElementById('tab-bar');
 const contentArea = document.getElementById('content-area');
@@ -10,76 +9,100 @@ const urlBar = document.getElementById('url-bar');
 const newTabBtn = document.getElementById('new-tab-btn');
 const bookmarksBar = document.getElementById('bookmarks-bar');
 
-// Lista tunnetuista sivustoisesta, jotka estävät iframe-upotuksen
-const BLOCKED_DOMAINS = [
+// CatBrowserin oma sisäinen domain
+const CAT_APPS_DOMAIN = 'catbrowser://apps';
+
+// Toimiva hakukone (Bing toimii luotettavammin iframe-upotuksissa)
+const SEARCH_ENGINE_URL = 'https://www.bing.com/search?q=';
+
+// Sivustot, jotka estävät upotuksen – ohjataan suoraan Bing-hakuun
+const BLOCKED_SITES = [
   'youtube.com', 'youtu.be', 'google.com', 'facebook.com', 
   'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 
   'reddit.com', 'netflix.com', 'yle.fi', 'hs.fi'
 ];
 
-// Hakukoneen osoite upotuksille
-const SEARCH_ENGINE_URL = 'https://html.duckduckgo.com/html/?q=';
-
-// Luodaan aloitusnäkymä DOM-elementtinä
-function createHomeScreen(tabId) {
+// Luodaan sisäinen CatApp-domain-sivu
+function createCatAppsScreen(tabId) {
   const container = document.createElement('div');
-  container.className = 'home-screen view-pane';
+  container.className = 'custom-page view-pane';
   container.dataset.id = tabId;
 
   container.innerHTML = `
-    <div class="home-title">🚀 Oma Browser</div>
+    <div class="brand-title">CatBrowser 🐱</div>
+    <div class="sub-title">Osoite: <b>catbrowser://apps</b></div>
+    
     <div class="search-box-home">
-      <input type="text" class="home-search-input" placeholder="Hae verkosta..." />
+      <input type="text" class="home-search-input" placeholder="Hae verkosta Bingillä..." />
       <button class="home-search-btn">Hae</button>
     </div>
-    <div class="shortcuts">
-      <div class="shortcut-card" data-url="https://fi.wikipedia.org">📚 Wikipedia</div>
-      <div class="shortcut-card" data-url="https://html.duckduckgo.com/html/?q=uutiset">📰 Uutiset</div>
-      <div class="shortcut-card" data-url="https://example.com">🌐 Example</div>
-      <div class="shortcut-card" data-url="https://html.duckduckgo.com/html/?q=youtube">▶️ YouTube Haku</div>
+
+    <div class="app-grid">
+      <div class="app-card" data-url="https://fi.wikipedia.org">
+        <div class="app-icon">📚</div>
+        <div class="app-name">Wikipedia</div>
+      </div>
+      <div class="app-card" data-url="https://www.bing.com">
+        <div class="app-icon">🔍</div>
+        <div class="app-name">Bing Haku</div>
+      </div>
+      <div class="app-card" data-url="https://example.com">
+        <div class="app-icon">🌐</div>
+        <div class="app-name">Example Web</div>
+      </div>
+      <div class="app-card" data-url="https://archive.org">
+        <div class="app-icon">🏛️</div>
+        <div class="app-name">Internet Archive</div>
+      </div>
+      <div class="app-card" data-url="https://openstreetmap.org">
+        <div class="app-icon">🗺️</div>
+        <div class="app-name">Kartat</div>
+      </div>
+      <div class="app-card" data-url="catbrowser://apps">
+        <div class="app-icon">🐱</div>
+        <div class="app-name">Cat Apps</div>
+      </div>
     </div>
   `;
 
   const searchInput = container.querySelector('.home-search-input');
   const searchBtn = container.querySelector('.home-search-btn');
 
-  const executeHomeSearch = () => {
-    const query = searchInput.value.trim();
-    if (query) {
-      navigateToUrl(tabId, query);
-    }
+  const executeSearch = () => {
+    const q = searchInput.value.trim();
+    if (q) navigateToUrl(tabId, q);
   };
 
-  searchBtn.addEventListener('click', executeHomeSearch);
+  searchBtn.addEventListener('click', executeSearch);
   searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') executeHomeSearch();
+    if (e.key === 'Enter') executeSearch();
   });
 
-  container.querySelectorAll('.shortcut-card').forEach(card => {
+  container.querySelectorAll('.app-card').forEach(card => {
     card.addEventListener('click', () => {
-      const targetUrl = card.dataset.url;
-      if (targetUrl) navigateToUrl(tabId, targetUrl);
+      const u = card.dataset.url;
+      if (u) navigateToUrl(tabId, u);
     });
   });
 
   return container;
 }
 
-// Luodaan uusi välilehti
-function createTab(initialUrl = null) {
+// Luodaan välilehti
+function createTab(initialUrl = CAT_APPS_DOMAIN) {
   const tabId = 'tab-' + Date.now();
 
   const tabElement = document.createElement('div');
   tabElement.className = 'tab';
   tabElement.dataset.id = tabId;
   tabElement.innerHTML = `
-    <span class="tab-title">${initialUrl ? 'Ladataan...' : 'Uusi välilehti'}</span>
+    <span class="tab-title">Cat Apps</span>
     <span class="close-tab" title="Sulje">&times;</span>
   `;
 
   let viewPane;
-  if (!initialUrl) {
-    viewPane = createHomeScreen(tabId);
+  if (initialUrl === CAT_APPS_DOMAIN) {
+    viewPane = createCatAppsScreen(tabId);
   } else {
     viewPane = document.createElement('iframe');
     viewPane.className = 'view-pane';
@@ -94,8 +117,9 @@ function createTab(initialUrl = null) {
     id: tabId,
     tabElement: tabElement,
     viewPane: viewPane,
-    url: initialUrl || 'about:blank',
-    isHome: !initialUrl
+    url: initialUrl,
+    historyStack: [initialUrl],
+    historyIndex: 0
   };
 
   tabs.push(tabData);
@@ -110,12 +134,10 @@ function createTab(initialUrl = null) {
     }
   });
 
-  if (initialUrl) {
-    updateTabTitle(tabData, initialUrl);
-  }
+  updateTabTitle(tabData, initialUrl);
 }
 
-// Vaihdetaan aktiivista välilehteä
+// Vaihdetaan välilehteä
 function switchTab(tabId) {
   activeTabId = tabId;
 
@@ -123,7 +145,7 @@ function switchTab(tabId) {
     if (tab.id === tabId) {
       tab.tabElement.classList.add('active');
       tab.viewPane.classList.add('active');
-      urlBar.value = tab.isHome ? '' : tab.url;
+      urlBar.value = tab.url;
     } else {
       tab.tabElement.classList.remove('active');
       tab.viewPane.classList.remove('active');
@@ -134,9 +156,7 @@ function switchTab(tabId) {
 // Suljetaan välilehti
 function closeTab(tabId) {
   if (tabs.length === 1) {
-    // Jos kyseessä on viimeinen välilehti, nollataan se aloitussivuksi
-    const lastTab = tabs[0];
-    navigateToUrl(lastTab.id, null);
+    navigateToUrl(tabs[0].id, CAT_APPS_DOMAIN);
     return;
   }
 
@@ -153,13 +173,14 @@ function closeTab(tabId) {
   }
 }
 
-// Osoitteen ja haun formatointi
+// Osoitteen muotoilu
 function formatUrl(input) {
-  if (!input) return 'about:blank';
+  if (!input) return CAT_APPS_DOMAIN;
   let query = input.trim();
 
-  // Tarkistetaan onko sivusto iframe-estolistalla
-  const isBlocked = BLOCKED_DOMAINS.some(domain => query.toLowerCase().includes(domain));
+  if (query === CAT_APPS_DOMAIN) return CAT_APPS_DOMAIN;
+
+  const isBlocked = BLOCKED_SITES.some(domain => query.toLowerCase().includes(domain));
 
   if (isBlocked || (!query.startsWith('http://') && !query.startsWith('https://') && (!query.includes('.') || query.includes(' ')))) {
     return SEARCH_ENGINE_URL + encodeURIComponent(query);
@@ -170,57 +191,70 @@ function formatUrl(input) {
   return query;
 }
 
-// Navigoidaan tiettyyn URL-osoitteeseen
+// Navigointi
 function navigateToUrl(tabId, rawInput) {
   const tab = tabs.find(t => t.id === tabId);
   if (!tab) return;
 
-  if (!rawInput) {
-    // Palaa aloitussivulle
-    tab.isHome = true;
-    tab.url = 'about:blank';
-
-    const oldPane = tab.viewPane;
-    tab.viewPane = createHomeScreen(tabId);
-    contentArea.replaceChild(tab.viewPane, oldPane);
-    
-    updateTabTitle(tab, 'Uusi välilehti');
-    switchTab(tabId);
-    return;
-  }
-
   const finalUrl = formatUrl(rawInput);
-  tab.isHome = false;
   tab.url = finalUrl;
 
-  if (tab.viewPane.tagName !== 'IFRAME') {
-    const newIframe = document.createElement('iframe');
-    newIframe.className = 'view-pane';
-    newIframe.dataset.id = tabId;
-    contentArea.replaceChild(newIframe, tab.viewPane);
-    tab.viewPane = newIframe;
+  // Tallenna omaan historia-pinoon toimivia takaisin-nappeja varten
+  if (tab.historyStack[tab.historyIndex] !== finalUrl) {
+    tab.historyStack = tab.historyStack.slice(0, tab.historyIndex + 1);
+    tab.historyStack.push(finalUrl);
+    tab.historyIndex = tab.historyStack.length - 1;
   }
 
-  tab.viewPane.src = finalUrl;
-  updateTabTitle(tab, rawInput);
-  switchTab(tabId);
+  if (finalUrl === CAT_APPS_DOMAIN) {
+    const oldPane = tab.viewPane;
+    tab.viewPane = createCatAppsScreen(tabId);
+    contentArea.replaceChild(tab.viewPane, oldPane);
+  } else {
+    if (tab.viewPane.tagName !== 'IFRAME') {
+      const newIframe = document.createElement('iframe');
+      newIframe.className = 'view-pane';
+      newIframe.dataset.id = tabId;
+      contentArea.replaceChild(newIframe, tab.viewPane);
+      tab.viewPane = newIframe;
+    }
+    tab.viewPane.src = finalUrl;
+  }
 
-  // Tallennetaan historiaan
-  historyLog.push({ timestamp: new Date().toLocaleTimeString(), url: finalUrl });
+  updateTabTitle(tab, finalUrl);
+  switchTab(tabId);
 }
 
-// Päivitetään välilehden otsikko
+// Takaisin- ja eteenpäin-näppäinten logiikka
+function goBack() {
+  const tab = tabs.find(t => t.id === activeTabId);
+  if (tab && tab.historyIndex > 0) {
+    tab.historyIndex--;
+    const prevUrl = tab.historyStack[tab.historyIndex];
+    navigateToUrl(tab.id, prevUrl);
+  }
+}
+
+function goForward() {
+  const tab = tabs.find(t => t.id === activeTabId);
+  if (tab && tab.historyIndex < tab.historyStack.length - 1) {
+    tab.historyIndex++;
+    const nextUrl = tab.historyStack[tab.historyIndex];
+    navigateToUrl(tab.id, nextUrl);
+  }
+}
+
 function updateTabTitle(tabData, text) {
-  let title = 'Sivu';
-  if (tabData.isHome) {
-    title = 'Uusi välilehti';
-  } else if (text.includes('duckduckgo.com')) {
-    title = 'Haku';
+  let title = 'Cat Apps';
+  if (text === CAT_APPS_DOMAIN) {
+    title = 'Cat Apps';
+  } else if (text.includes('bing.com')) {
+    title = 'Bing Haku';
   } else if (text.includes('wikipedia.org')) {
     title = 'Wikipedia';
   } else {
     try {
-      const parsed = new URL(formatUrl(text));
+      const parsed = new URL(text);
       title = parsed.hostname.replace('www.', '');
     } catch (e) {
       title = text.substring(0, 12);
@@ -229,7 +263,7 @@ function updateTabTitle(tabData, text) {
   tabData.tabElement.querySelector('.tab-title').textContent = title;
 }
 
-// Navigointipalkin kuuntelijat
+// Kuuntelijat
 document.getElementById('go-btn').addEventListener('click', () => {
   if (activeTabId) navigateToUrl(activeTabId, urlBar.value);
 });
@@ -240,34 +274,22 @@ urlBar.addEventListener('keypress', (e) => {
   }
 });
 
-newTabBtn.addEventListener('click', () => createTab());
-
+newTabBtn.addEventListener('click', () => createTab(CAT_APPS_DOMAIN));
 document.getElementById('home-btn').addEventListener('click', () => {
-  if (activeTabId) navigateToUrl(activeTabId, null);
+  if (activeTabId) navigateToUrl(activeTabId, CAT_APPS_DOMAIN);
 });
 
 document.getElementById('reload-btn').addEventListener('click', () => {
   const currentTab = tabs.find(t => t.id === activeTabId);
-  if (currentTab && !currentTab.isHome && currentTab.viewPane.tagName === 'IFRAME') {
+  if (currentTab && currentTab.viewPane.tagName === 'IFRAME') {
     currentTab.viewPane.src = currentTab.viewPane.src;
   }
 });
 
-document.getElementById('back-btn').addEventListener('click', () => {
-  const currentTab = tabs.find(t => t.id === activeTabId);
-  if (currentTab && currentTab.viewPane.contentWindow) {
-    try { currentTab.viewPane.contentWindow.history.back(); } catch (e) {}
-  }
-});
+// Toimivat takaisin- ja eteenpäin-napit
+document.getElementById('back-btn').addEventListener('click', goBack);
+document.getElementById('forward-btn').addEventListener('click', goForward);
 
-document.getElementById('forward-btn').addEventListener('click', () => {
-  const currentTab = tabs.find(t => t.id === activeTabId);
-  if (currentTab && currentTab.viewPane.contentWindow) {
-    try { currentTab.viewPane.contentWindow.history.forward(); } catch (e) {}
-  }
-});
-
-// Kirjanmerkit
 bookmarksBar.addEventListener('click', (e) => {
   if (e.target.classList.contains('bookmark-item')) {
     const targetUrl = e.target.dataset.url;
@@ -277,5 +299,5 @@ bookmarksBar.addEventListener('click', (e) => {
   }
 });
 
-// Käynnistetään ensimmäinen välilehti aloitussivuna
-createTab();
+// Käynnistys
+createTab(CAT_APPS_DOMAIN);

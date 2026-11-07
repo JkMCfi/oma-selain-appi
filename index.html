@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Browser Pro Edition</title>
+  <title>CatBrowser 🐱</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -16,7 +16,7 @@
       overflow: hidden;
     }
     
-    /* Välilehtipalkki */
+    /* Yläpalkki / Välilehdet */
     .tab-bar {
       display: flex;
       background: #181825;
@@ -44,7 +44,7 @@
     }
     .tab.active {
       background: #313244;
-      color: #89b4fa;
+      color: #f5c2e7;
       font-weight: 600;
       border-color: #45475a;
     }
@@ -63,7 +63,7 @@
       font-size: 12px;
       color: #a6adc8;
     }
-    .tab .close-tab:hover { background: #585b70; color: #fff; }
+    .tab .close-tab:hover { background: #f38ba8; color: #11111b; }
     .new-tab-btn {
       padding: 6px 12px;
       background: transparent;
@@ -75,7 +75,7 @@
     }
     .new-tab-btn:hover { background: #313244; color: #fff; }
 
-    /* Navigointipalkki */
+    /* Navigointi */
     .nav-bar {
       display: flex;
       gap: 8px;
@@ -100,13 +100,13 @@
       border-radius: 20px;
       border: 1px solid #45475a;
       background: #11111b;
-      color: #cdd6f4;
+      color: #f5c2e7;
       font-size: 14px;
       outline: none;
     }
-    input#url-bar:focus { border-color: #89b4fa; }
+    input#url-bar:focus { border-color: #cba6f7; }
 
-    /* Kirjanmerkit & Kontrollit */
+    /* Kirjanmerkit */
     .bookmarks-bar {
       display: flex;
       gap: 10px;
@@ -123,9 +123,9 @@
       border-radius: 4px;
       background: #181825;
     }
-    .bookmark-item:hover { background: #313244; color: #89b4fa; }
+    .bookmark-item:hover { background: #313244; color: #f5c2e7; }
 
-    /* Sisältöalue */
+    /* Sisältö */
     .content-area {
       flex: 1;
       position: relative;
@@ -140,30 +140,33 @@
     }
     .view-pane.active { display: block; }
 
-    /* Aloitussivu (Home Screen) */
-    .home-screen {
+    /* Custom Domain Näkymät (catbrowser://apps) */
+    .custom-page {
       width: 100%;
       height: 100%;
       display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       background: #1e1e2e;
       color: #cdd6f4;
-      padding: 20px;
+      padding: 40px 20px;
+      overflow-y: auto;
     }
-    .home-screen.active { display: flex; }
-    .home-title { font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #89b4fa; }
+    .custom-page.active { display: flex; }
+    .brand-title { font-size: 42px; font-weight: bold; margin-bottom: 10px; color: #cba6f7; }
+    .sub-title { color: #a6adc8; margin-bottom: 30px; font-size: 16px; }
+
     .search-box-home {
       display: flex;
       width: 100%;
-      max-width: 500px;
+      max-width: 550px;
       gap: 8px;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
     }
     .search-box-home input {
       flex: 1;
-      padding: 12px 18px;
+      padding: 12px 20px;
       border-radius: 25px;
       border: 1px solid #45475a;
       background: #11111b;
@@ -172,30 +175,34 @@
       outline: none;
     }
     .search-box-home button {
-      padding: 12px 20px;
+      padding: 12px 24px;
       border-radius: 25px;
       border: none;
-      background: #89b4fa;
+      background: #cba6f7;
       color: #11111b;
       font-weight: bold;
       cursor: pointer;
     }
-    .shortcuts {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      justify-content: center;
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 700px;
     }
-    .shortcut-card {
+    .app-card {
       background: #313244;
-      padding: 15px 25px;
-      border-radius: 12px;
+      padding: 20px;
+      border-radius: 16px;
       cursor: pointer;
       text-align: center;
-      min-width: 110px;
-      transition: transform 0.2s;
+      transition: all 0.2s;
+      border: 1px solid #45475a;
     }
-    .shortcut-card:hover { transform: translateY(-3px); background: #45475a; }
+    .app-card:hover { transform: translateY(-5px); background: #45475a; border-color: #cba6f7; }
+    .app-icon { font-size: 32px; margin-bottom: 8px; }
+    .app-name { font-size: 14px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -209,13 +216,14 @@
     <button class="nav-btn" id="forward-btn" title="Eteenpäin">→</button>
     <button class="nav-btn" id="reload-btn" title="Päivitä">↻</button>
     <button class="nav-btn" id="home-btn" title="Etusivu">🏠</button>
-    <input type="text" id="url-bar" placeholder="Hae verkosta tai kirjoita osoite..." />
+    <input type="text" id="url-bar" placeholder="Kirjoita osoite tai hae verkosta..." />
     <button class="nav-btn" id="go-btn">Hae</button>
   </div>
 
   <div class="bookmarks-bar" id="bookmarks-bar">
-    <span class="bookmark-item" data-url="https://html.duckduckgo.com/html/">🔍 DuckDuckGo</span>
+    <span class="bookmark-item" data-url="catbrowser://apps">📱 Cat Apps</span>
     <span class="bookmark-item" data-url="https://fi.wikipedia.org">📚 Wikipedia</span>
+    <span class="bookmark-item" data-url="https://bing.com">🔍 Bing Search</span>
     <span class="bookmark-item" data-url="https://example.com">🌐 Example</span>
   </div>
 

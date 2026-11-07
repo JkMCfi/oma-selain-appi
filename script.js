@@ -1,4 +1,4 @@
-// --- CATBROWSER ENGINE v2.0 ---
+// --- CATBROWSER ENGINE v3.0 ---
 
 let tabs = [];
 let activeTabId = null;
@@ -10,29 +10,38 @@ const newTabBtn = document.getElementById('new-tab-btn');
 const bookmarksBar = document.getElementById('bookmarks-bar');
 
 const CAT_APPS_DOMAIN = 'catbrowser://apps';
+const CAT_SEARCH_DOMAIN = 'catbrowser://search';
 
-// Luodaan sisäinen CatApp-domain-sivu
-function createCatAppsScreen(tabId, searchQuery = '') {
+// Luodaan sisäinen näkymä (Apps / Search)
+function createCatPage(tabId, pageType, query = '') {
   const container = document.createElement('div');
   container.className = 'custom-page view-pane';
   container.dataset.id = tabId;
 
   let searchResultsHtml = '';
-  if (searchQuery) {
+  if (query) {
     searchResultsHtml = `
       <div class="search-results-area">
-        <h3 style="color: #cba6f7; margin-bottom: 10px;">Hakutulokset hakusanalle: "${searchQuery}"</h3>
+        <h3 style="color: #cba6f7; margin-bottom: 12px;">Hakutulokset sanalle: "${query}"</h3>
+        
         <div class="result-card">
-          <div class="result-title" onclick="navigateToUrl('${tabId}', 'https://fi.wikipedia.org/wiki/${encodeURIComponent(searchQuery)}')">📚 Wikipedia: ${searchQuery}</div>
-          <div class="result-snippet">Avaa artikkeli "${searchQuery}" suoraan Suomen Wikipediasta.</div>
+          <div class="result-title" onclick="navigateToUrl('${tabId}', 'https://fi.wikipedia.org/wiki/${encodeURIComponent(query)}')">📚 Wikipedia: ${query}</div>
+          <div class="result-snippet">Avaa suora tietoartikkeli suomeksi sanasta "${query}".</div>
         </div>
+
         <div class="result-card">
-          <div class="result-title" onclick="navigateToUrl('${tabId}', 'https://example.com')">🌐 Verkkosivu: Example.com</div>
-          <div class="result-snippet">Valmis testiverkkosivu, joka sallii kaikkien selaimien upotuksen.</div>
+          <div class="result-title" onclick="navigateToUrl('${tabId}', 'https://example.com')">🌐 Verkkosivu: Example Web</div>
+          <div class="result-snippet">Avoin ja varma verkkosivu ilman upotusrajoituksia.</div>
         </div>
+
+        <div class="result-card">
+          <div class="result-title" onclick="navigateToUrl('${tabId}', 'https://openstreetmap.org')">🗺️ OpenStreetMap</div>
+          <div class="result-snippet">Selaa maailmankarttaa ja paikkoja suoraan selaimessasi.</div>
+        </div>
+
         <div class="result-card">
           <div class="result-title" onclick="navigateToUrl('${tabId}', '${CAT_APPS_DOMAIN}')">🐱 Cat Apps Portaali</div>
-          <div class="result-snippet">Palaa takaisin CatBrowserin omaan sovellusvalikkoon.</div>
+          <div class="result-snippet">Palaa CatBrowserin kotivalikkoon.</div>
         </div>
       </div>
     `;
@@ -40,16 +49,16 @@ function createCatAppsScreen(tabId, searchQuery = '') {
 
   container.innerHTML = `
     <div class="brand-title">CatBrowser 🐱</div>
-    <div class="sub-title">Osoite: <b>${searchQuery ? 'catbrowser://search?q=' + encodeURIComponent(searchQuery) : 'catbrowser://apps'}</b></div>
+    <div class="sub-title">Osoite: <b>${query ? 'catbrowser://search?q=' + encodeURIComponent(query) : 'catbrowser://apps'}</b></div>
     
     <div class="search-box-home">
-      <input type="text" class="home-search-input" placeholder="Hae CatBrowserilla..." value="${searchQuery}" />
+      <input type="text" class="home-search-input" placeholder="Hae verkosta..." value="${query}" />
       <button class="home-search-btn">Hae</button>
     </div>
 
     ${searchResultsHtml}
 
-    ${!searchQuery ? `
+    ${!query ? `
     <div class="app-grid">
       <div class="app-card" data-url="https://fi.wikipedia.org">
         <div class="app-icon">📚</div>
@@ -98,7 +107,7 @@ function createCatAppsScreen(tabId, searchQuery = '') {
   return container;
 }
 
-// Luodaan välilehti
+// Luodaan uusi välilehti
 function createTab(initialUrl = CAT_APPS_DOMAIN) {
   const tabId = 'tab-' + Date.now();
 
@@ -111,8 +120,8 @@ function createTab(initialUrl = CAT_APPS_DOMAIN) {
   `;
 
   let viewPane;
-  if (initialUrl.startsWith(CAT_APPS_DOMAIN)) {
-    viewPane = createCatAppsScreen(tabId);
+  if (initialUrl.startsWith('catbrowser://')) {
+    viewPane = createCatPage(tabId, 'apps');
   } else {
     viewPane = document.createElement('iframe');
     viewPane.className = 'view-pane';
@@ -183,19 +192,24 @@ function closeTab(tabId) {
   }
 }
 
-// Osoitteen muotoilu
+// Osoitteen ja haun muotoilu
 function formatUrl(input) {
   if (!input) return CAT_APPS_DOMAIN;
-  let query = input.trim();
+  let query = input.trim().toLowerCase();
 
-  if (query.startsWith('catbrowser://')) return query;
-  if (query.startsWith('http://') || query.startsWith('https://')) return query;
-
-  if (query.includes('.') && !query.includes(' ')) {
-    return 'https://' + query;
+  // Jos yritetään mennä Googleen tai YouTubeen, ohjataan sisäiseen CatSearchiin
+  if (query.includes('google.com') || query.includes('youtube.com') || query.includes('google') || query.includes('youtube')) {
+    return CAT_SEARCH_DOMAIN + '?q=' + encodeURIComponent(query);
   }
 
-  return CAT_APPS_DOMAIN + '?q=' + encodeURIComponent(query);
+  if (query.startsWith('catbrowser://')) return query;
+  if (query.startsWith('http://') || query.startsWith('https://')) return input.trim();
+
+  if (query.includes('.') && !query.includes(' ')) {
+    return 'https/' + input.trim();
+  }
+
+  return CAT_SEARCH_DOMAIN + '?q=' + encodeURIComponent(input.trim());
 }
 
 // Navigointi
@@ -203,21 +217,20 @@ function navigateToUrl(tabId, rawInput) {
   const tab = tabs.find(t => t.id === tabId);
   if (!tab) return;
 
-  const isSearch = !rawInput.startsWith('http://') && !rawInput.startsWith('https://') && !rawInput.startsWith('catbrowser://') && (!rawInput.includes('.') || rawInput.includes(' '));
-  const finalUrl = isSearch ? CAT_APPS_DOMAIN + '?q=' + encodeURIComponent(rawInput) : formatUrl(rawInput);
-
+  const finalUrl = formatUrl(rawInput);
   tab.url = finalUrl;
 
+  // Tallennus historia-pinoon (takaisin & eteenpäin -nappeja varten)
   if (tab.historyStack[tab.historyIndex] !== finalUrl) {
     tab.historyStack = tab.historyStack.slice(0, tab.historyIndex + 1);
     tab.historyStack.push(finalUrl);
     tab.historyIndex = tab.historyStack.length - 1;
   }
 
-  if (finalUrl.startsWith(CAT_APPS_DOMAIN)) {
+  if (finalUrl.startsWith('catbrowser://')) {
     const searchQuery = finalUrl.includes('?q=') ? decodeURIComponent(finalUrl.split('?q=')[1]) : '';
     const oldPane = tab.viewPane;
-    tab.viewPane = createCatAppsScreen(tabId, searchQuery);
+    tab.viewPane = createCatPage(tabId, 'search', searchQuery);
     contentArea.replaceChild(tab.viewPane, oldPane);
   } else {
     if (tab.viewPane.tagName !== 'IFRAME') {
@@ -253,7 +266,7 @@ function goForward() {
 
 function updateTabTitle(tabData, text) {
   let title = 'Cat Apps';
-  if (text.startsWith(CAT_APPS_DOMAIN) || text === '') {
+  if (text.startsWith('catbrowser://') || text === '') {
     title = 'Cat Apps';
   } else if (text.includes('wikipedia.org')) {
     title = 'Wikipedia';
@@ -268,7 +281,7 @@ function updateTabTitle(tabData, text) {
   tabData.tabElement.querySelector('.tab-title').textContent = title;
 }
 
-// Tapahtumakuuntelijat
+// Kuuntelijat
 document.getElementById('go-btn').addEventListener('click', () => {
   if (activeTabId) navigateToUrl(activeTabId, urlBar.value);
 });

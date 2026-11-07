@@ -140,7 +140,7 @@
     .view-pane.active { display: block; }
     iframe.view-pane { background: white; }
 
-    /* Custom Domain Näkymä (catbrowser://apps) */
+    /* Custom CatPages */
     .custom-page {
       width: 100%;
       height: 100%;
@@ -154,15 +154,15 @@
       overflow-y: auto;
     }
     .custom-page.active { display: flex; }
-    .brand-title { font-size: 48px; font-weight: bold; margin-bottom: 8px; color: #cba6f7; text-align: center; }
-    .sub-title { color: #a6adc8; margin-bottom: 30px; font-size: 16px; text-align: center; }
+    .brand-title { font-size: 42px; font-weight: bold; margin-bottom: 8px; color: #cba6f7; text-align: center; }
+    .sub-title { color: #a6adc8; margin-bottom: 30px; font-size: 15px; text-align: center; }
 
     .search-box-home {
       display: flex;
       width: 100%;
       max-width: 600px;
       gap: 10px;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
     .search-box-home input {
       flex: 1;
@@ -207,18 +207,16 @@
     .app-icon { font-size: 36px; margin-bottom: 10px; }
     .app-name { font-size: 14px; font-weight: 600; color: #cdd6f4; }
 
-    /* Sisäiset Hakutulokset */
     .search-results-area {
       width: 100%;
       max-width: 750px;
-      margin-top: 20px;
       display: flex;
       flex-direction: column;
       gap: 15px;
     }
     .result-card {
       background: #313244;
-      padding: 16px;
+      padding: 18px;
       border-radius: 12px;
       border: 1px solid #45475a;
     }
@@ -244,6 +242,7 @@
 
   <div class="bookmarks-bar" id="bookmarks-bar">
     <span class="bookmark-item" data-url="catbrowser://apps">📱 Cat Apps</span>
+    <span class="bookmark-item" data-url="catbrowser://search">🔍 CatSearch</span>
     <span class="bookmark-item" data-url="https://fi.wikipedia.org">📚 Wikipedia</span>
     <span class="bookmark-item" data-url="https://example.com">🌐 Example</span>
   </div>

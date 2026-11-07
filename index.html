@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>Oma selain</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: #1e1e2e;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      padding: 10px;
+      background: #181825;
+      border-bottom: 1px solid #313244;
+    }
+    input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #45475a;
+      background: #11111b;
+      color: white;
+      font-size: 14px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #313244;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45475a;
+    }
+    iframe {
+      flex: 1;
+      border: none;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <button id="back-btn">←</button>
+    <button id="forward-btn">→</button>
+    <input type="text" id="url-input" value="https://wikipedia.org" />
+    <button id="go-btn">Mene</button>
+  </div>
+
+  <iframe id="browser-view" src="https://wikipedia.org"></iframe>
+
+  <script src="script.js"></script>
+</body>
+</html>

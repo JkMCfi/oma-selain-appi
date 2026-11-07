@@ -6,21 +6,21 @@ const contentArea = document.getElementById('content-area');
 const urlBar = document.getElementById('url-bar');
 const newTabBtn = document.getElementById('new-tab-btn');
 
-function createTab(initialUrl = 'https://html5test.opensuse.org/') {
+function createTab(initialUrl = 'https://example.com') {
   const tabId = 'tab-' + Date.now();
   
   // Luodaan välilehtinappi
   const tabElement = document.createElement('div');
-  tabElement.className = 'tab';
+  tabElement.className = 'tab active';
   tabElement.dataset.id = tabId;
   tabElement.innerHTML = `
-    <span class="tab-title">Uusi välilehti</span>
+    <span class="tab-title">Sivu</span>
     <span class="close-tab">&times;</span>
   `;
 
   // Luodaan iframe-näkymä
   const iframe = document.createElement('iframe');
-  iframe.className = 'view-pane';
+  iframe.className = 'view-pane active';
   iframe.dataset.id = tabId;
   iframe.src = initialUrl;
 
@@ -30,24 +30,26 @@ function createTab(initialUrl = 'https://html5test.opensuse.org/') {
   const tabData = { id: tabId, tabElement, iframe, url: initialUrl };
   tabs.push(tabData);
 
+  // Poistetaan muiden aktiivisuus
+  switchTab(tabId);
+
   // Tapahtumat
   tabElement.addEventListener('click', (e) => {
     if (e.target.classList.contains('close-tab')) {
+      e.stopPropagation();
       closeTab(tabId);
     } else {
       switchTab(tabId);
     }
   });
-
-  switchTab(tabId);
 }
 
 function switchTab(tabId) {
+  activeTabId = tabId;
   tabs.forEach(tab => {
     if (tab.id === tabId) {
       tab.tabElement.classList.add('active');
       tab.iframe.classList.add('active');
-      activeTabId = tabId;
       urlBar.value = tab.url;
     } else {
       tab.tabElement.classList.remove('active');
@@ -57,7 +59,7 @@ function switchTab(tabId) {
 }
 
 function closeTab(tabId) {
-  if (tabs.length === 1) return; // Älä sulje viimeistä välilehteä
+  if (tabs.length === 1) return; // Älä sulje viimeistä
 
   const index = tabs.findIndex(t => t.id === tabId);
   if (index !== -1) {
@@ -81,7 +83,6 @@ function navigate() {
     if (input.includes('.') && !input.includes(' ')) {
       finalUrl = 'https://' + input;
     } else {
-      // Hakukoneupotus (DuckDuckGo HTML-versio iframe-yhteensopivuudelle)
       finalUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
     }
   }
@@ -90,18 +91,18 @@ function navigate() {
   if (currentTab) {
     currentTab.url = finalUrl;
     currentTab.iframe.src = finalUrl;
-    currentTab.tabElement.querySelector('.tab-title').textContent = input.substring(0, 15);
+    currentTab.tabElement.querySelector('.tab-title').textContent = input.substring(0, 12);
   }
 }
 
-// Navigointipainikkeet
+// Napit
 document.getElementById('go-btn').addEventListener('click', navigate);
 urlBar.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate(); });
-newTabBtn.addEventListener('click', () => createTab());
+newTabBtn.addEventListener('click', () => createTab('https://example.com'));
 document.getElementById('home-btn').addEventListener('click', () => {
-  urlBar.value = 'https://wikipedia.org';
+  urlBar.value = 'https://example.com';
   navigate();
 });
 
-// Avaa ensimmäinen välilehti käynnistyksessä
-createTab('https://wikipedia.org');
+// Käynnistää heti yhden välilehden
+createTab('https://example.com');

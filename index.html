@@ -16,7 +16,7 @@
       overflow: hidden;
     }
     
-    /* Yläpalkki / Välilehdet */
+    /* Välilehtipalkki */
     .tab-bar {
       display: flex;
       background: #181825;
@@ -75,7 +75,7 @@
     }
     .new-tab-btn:hover { background: #313244; color: #fff; }
 
-    /* Navigointi */
+    /* Navigointipalkki */
     .nav-bar {
       display: flex;
       gap: 8px;
@@ -125,7 +125,7 @@
     }
     .bookmark-item:hover { background: #313244; color: #f5c2e7; }
 
-    /* Sisältö */
+    /* Sisältöalue */
     .content-area {
       flex: 1;
       position: relative;
@@ -136,11 +136,11 @@
       height: 100%;
       display: none;
       border: none;
-      background: white;
     }
     .view-pane.active { display: block; }
+    iframe.view-pane { background: white; }
 
-    /* Custom Domain Näkymät (catbrowser://apps) */
+    /* Custom Domain Näkymä (catbrowser://apps) */
     .custom-page {
       width: 100%;
       height: 100%;
@@ -154,55 +154,77 @@
       overflow-y: auto;
     }
     .custom-page.active { display: flex; }
-    .brand-title { font-size: 42px; font-weight: bold; margin-bottom: 10px; color: #cba6f7; }
-    .sub-title { color: #a6adc8; margin-bottom: 30px; font-size: 16px; }
+    .brand-title { font-size: 48px; font-weight: bold; margin-bottom: 8px; color: #cba6f7; text-align: center; }
+    .sub-title { color: #a6adc8; margin-bottom: 30px; font-size: 16px; text-align: center; }
 
     .search-box-home {
       display: flex;
       width: 100%;
-      max-width: 550px;
-      gap: 8px;
+      max-width: 600px;
+      gap: 10px;
       margin-bottom: 40px;
     }
     .search-box-home input {
       flex: 1;
-      padding: 12px 20px;
-      border-radius: 25px;
+      padding: 14px 22px;
+      border-radius: 30px;
       border: 1px solid #45475a;
       background: #11111b;
       color: #fff;
       font-size: 16px;
       outline: none;
     }
+    .search-box-home input:focus { border-color: #cba6f7; }
     .search-box-home button {
-      padding: 12px 24px;
-      border-radius: 25px;
+      padding: 14px 28px;
+      border-radius: 30px;
       border: none;
       background: #cba6f7;
       color: #11111b;
       font-weight: bold;
       cursor: pointer;
+      font-size: 16px;
     }
+    .search-box-home button:hover { background: #f5c2e7; }
 
     .app-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 20px;
       width: 100%;
-      max-width: 700px;
+      max-width: 750px;
     }
     .app-card {
       background: #313244;
-      padding: 20px;
+      padding: 22px 15px;
       border-radius: 16px;
       cursor: pointer;
       text-align: center;
-      transition: all 0.2s;
+      transition: all 0.2s ease-in-out;
       border: 1px solid #45475a;
     }
     .app-card:hover { transform: translateY(-5px); background: #45475a; border-color: #cba6f7; }
-    .app-icon { font-size: 32px; margin-bottom: 8px; }
-    .app-name { font-size: 14px; font-weight: 600; }
+    .app-icon { font-size: 36px; margin-bottom: 10px; }
+    .app-name { font-size: 14px; font-weight: 600; color: #cdd6f4; }
+
+    /* Sisäiset Hakutulokset */
+    .search-results-area {
+      width: 100%;
+      max-width: 750px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .result-card {
+      background: #313244;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #45475a;
+    }
+    .result-title { font-size: 18px; font-weight: bold; color: #89b4fa; margin-bottom: 6px; cursor: pointer; }
+    .result-title:hover { text-decoration: underline; }
+    .result-snippet { font-size: 14px; color: #a6adc8; }
   </style>
 </head>
 <body>
@@ -216,14 +238,13 @@
     <button class="nav-btn" id="forward-btn" title="Eteenpäin">→</button>
     <button class="nav-btn" id="reload-btn" title="Päivitä">↻</button>
     <button class="nav-btn" id="home-btn" title="Etusivu">🏠</button>
-    <input type="text" id="url-bar" placeholder="Kirjoita osoite tai hae verkosta..." />
+    <input type="text" id="url-bar" placeholder="Kirjoita osoite tai hae CatBrowserilla..." />
     <button class="nav-btn" id="go-btn">Hae</button>
   </div>
 
   <div class="bookmarks-bar" id="bookmarks-bar">
     <span class="bookmark-item" data-url="catbrowser://apps">📱 Cat Apps</span>
     <span class="bookmark-item" data-url="https://fi.wikipedia.org">📚 Wikipedia</span>
-    <span class="bookmark-item" data-url="https://bing.com">🔍 Bing Search</span>
     <span class="bookmark-item" data-url="https://example.com">🌐 Example</span>
   </div>
 

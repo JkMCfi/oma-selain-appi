@@ -30,7 +30,6 @@ function createTab(initialUrl = 'https://example.com') {
   const tabData = { id: tabId, tabElement, iframe, url: initialUrl };
   tabs.push(tabData);
 
-  // Poistetaan muiden aktiivisuus
   switchTab(tabId);
 
   // Tapahtumat
@@ -59,7 +58,7 @@ function switchTab(tabId) {
 }
 
 function closeTab(tabId) {
-  if (tabs.length === 1) return; // Älä sulje viimeistä
+  if (tabs.length === 1) return;
 
   const index = tabs.findIndex(t => t.id === tabId);
   if (index !== -1) {
@@ -79,12 +78,15 @@ function navigate() {
   let input = urlBar.value.trim();
   let finalUrl = input;
 
-  if (!input.startsWith('http://') && !input.startsWith('https://')) {
-    if (input.includes('.') && !input.includes(' ')) {
-      finalUrl = 'https://' + input;
-    } else {
-      finalUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
-    }
+  // Lista sivustoista, jotka estävät iframe-upotuksen
+  const blockedSites = ['youtube.com', 'google.com', 'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com'];
+  const isBlocked = blockedSites.some(site => input.toLowerCase().includes(site));
+
+  if (isBlocked || (!input.startsWith('http://') && !input.startsWith('https://') && (!input.includes('.') || input.includes(' ')))) {
+    // Ohjataan hakuun DuckDuckGon kautta, jos sivusto on estetty tai kyseessä on hakusana
+    finalUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(input);
+  } else if (!input.startsWith('http://') && !input.startsWith('https://')) {
+    finalUrl = 'https://' + input;
   }
 
   const currentTab = tabs.find(t => t.id === activeTabId);
@@ -95,7 +97,7 @@ function navigate() {
   }
 }
 
-// Napit
+// Napit ja kuuntelijat
 document.getElementById('go-btn').addEventListener('click', navigate);
 urlBar.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate(); });
 newTabBtn.addEventListener('click', () => createTab('https://example.com'));
@@ -104,5 +106,5 @@ document.getElementById('home-btn').addEventListener('click', () => {
   navigate();
 });
 
-// Käynnistää heti yhden välilehden
+// Käynnistetään ensimmäinen välilehti
 createTab('https://example.com');
